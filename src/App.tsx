@@ -1,86 +1,149 @@
-import { useEffect, useState } from "react";
-import { fetchImages } from "./services/api";
-import Loader from "./components/Loader/Loader";
-import ImageGallery from "./components/ImageGallery/ImageGallery";
-import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import { useState, useEffect } from "react";
 import SearchBar from "./components/SearchBar/SearchBar";
-import toast from "react-hot-toast";
-import "modern-normalize";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import Loader from "./components/Loader/Loader";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import { fetchImages } from "./api/http-api";
 import ImageModal from "./components/ImageModal/ImageModal";
+import "./App.css";
 
-function App() {
-  const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [page, setPage] = useState(0);
-  const [query, setQuerry] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+interface Image {
+  id: string;
+  alt_description: string;
+  urls: {
+    small: string;
+    regular: string;
+    full: string;
+  };
+}
+
+interface ModalImage {
+  url: string;
+  alt: string;
+}
+
+interface UnsplashImage {
+  id: string;
+  alt_description: string;
+  urls: {
+    small: string;
+    regular: string;
+  };
+}
+
+const transformToImage = (unsplashImage: UnsplashImage): Image => ({
+  id: unsplashImage.id,
+  alt_description: unsplashImage.alt_description,
+  urls: {
+    small: unsplashImage.urls.small,
+    regular: unsplashImage.urls.regular,
+    full: unsplashImage.urls.regular,
+  },
+});
+
+const App = () => {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [images, setImages] = useState<Image[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalImage, setModalImage] = useState<ModalImage>({
+    url: "",
+    alt: "",
+  });
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [noImagesFound, setNoImagesFound] = useState<boolean>(false);
+
   useEffect(() => {
-    if (!query.trim()) return;
-    const getImagesData = async () => {
+    if (!searchQuery) return;
+
+    const getImages = async () => {
+      setIsLoading(true);
+      setError(null);
+      setNoImagesFound(false);
+
       try {
-        setIsLoading(true);
-        setIsError(false);
-        const { results } = await fetchImages({ query, page });
-        setImages((prev) => [...prev, ...results]);
-      } catch (error) {
-        setIsError(true);
-        console.log(error);
+        const data = await fetchImages(searchQuery, page);
+        if (data.results.length === 0) {
+          setNoImagesFound(true);
+        }
+        setImages((prevImages) => [
+          ...prevImages,
+          ...data.results.map(transformToImage),
+        ]);
+        setTotalPages(data.total_pages);
+      } catch (err) {
+        setError((err as Error).message);
       } finally {
         setIsLoading(false);
       }
     };
-    getImagesData();
-  }, [page, query]);
-  const handleChangePage = () => {
-    setPage((prev) => prev + 1);
-  };
-  const handleChangeQuery = (newQuery) => {
-    if (!newQuery) {
-      toast.error("Please enter query text!");
-      return;
+
+    getImages();
+  }, [searchQuery, page]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.getElementById("root")?.setAttribute("inert", "true");
+    } else {
+      document.getElementById("root")?.removeAttribute("inert");
     }
-    if (newQuery === query) {
-      toast.error("Please change query");
-      return;
-    }
-    setQuerry(newQuery);
+  }, [isModalOpen]);
+
+  const handleSearchSubmit = (query: string) => {
+    setSearchQuery(query);
     setImages([]);
     setPage(1);
+    setNoImagesFound(false);
   };
 
-  const handleOpenModal = (image) => {
-    setSelectedImage(image);
-    setIsOpen(true);
-    document.body.classList.add("modalOpen");
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
+
+    setTimeout(() => {
+      window.scrollBy({
+        top: 200,
+        behavior: "smooth",
+      });
+    }, 300);
   };
 
-  const handleCloseModal = (e) => {
-    if (e.target === e.currentTarget) {
-      setIsOpen(false);
-    }
-    setSelectedImage(null);
-    setIsOpen(false);
-    document.body.classList.remove("modalOpen");
+  const openModal = (imageUrl: string, imageAlt: string) => {
+    setModalImage({ url: imageUrl, alt: imageAlt });
+    setIsModalOpen(true);
   };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const hasMoreImages = page < totalPages;
+
   return (
-    <>
-      <SearchBar onSearchChange={handleChangeQuery} />
+    <div className="App">
+      <SearchBar onSubmit={handleSearchSubmit} />
+      {error && <ErrorMessage message={error} />}
+      {noImagesFound && (
+        <p>No images found for {searchQuery}. Please try another search.</p>
+      )}
       {images.length > 0 && (
-        <>
-          <ImageGallery images={images} onClick={handleOpenModal} />
-          <LoadMoreBtn changePage={handleChangePage} />
-        </>
+        <ImageGallery images={images} onImageClick={openModal} />
       )}
       {isLoading && <Loader />}
-      {isError && <ErrorMessage />}
-      {isOpen && (
-        <ImageModal image={selectedImage} closeModal={handleCloseModal} />
+      {images.length > 0 && !isLoading && hasMoreImages && (
+        <LoadMoreBtn onClick={handleLoadMore} isVisible={hasMoreImages} />
       )}
-    </>
+
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        imageUrl={modalImage.url}
+        imageAlt={modalImage.alt}
+      />
+    </div>
   );
-}
+};
 
 export default App;

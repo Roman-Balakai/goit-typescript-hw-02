@@ -1,12 +1,16 @@
-import s from "./ImageCard.module.css";
+import styles from "./ImageCard.module.css";
 
-const ImageCard = ({ src, alt, onClick }) => {
+interface ImageCardProps {
+  src: string;
+  alt: string;
+  onClick: () => void;
+}
+
+const ImageCard: React.FC<ImageCardProps> = ({ src, alt, onClick }) => {
   return (
-    <li>
-      <div onClick={onClick}>
-        <img className={s.image} src={src} alt={alt} width="300" height="200" />
-      </div>
-    </li>
+    <div className={styles.card} onClick={onClick}>
+      <img className={styles.image} src={src} alt={alt} />
+    </div>
   );
 };
 

@@ -1,18 +1,18 @@
-import { ThreeDots } from "react-loader-spinner";
-import s from "./Loader.module.css";
+import { MagnifyingGlass } from "react-loader-spinner";
+import styles from "./Loader.module.css";
 
-const Loader = () => {
+const Loader: React.FC = () => {
   return (
-    <div className={s.spinner}>
-      <ThreeDots
+    <div className={styles.loaderContainer}>
+      <MagnifyingGlass
         visible={true}
         height="80"
         width="80"
-        color="blue"
-        radius="9"
-        ariaLabel="three-dots-loading"
+        ariaLabel="Loading..."
         wrapperStyle={{}}
         wrapperClass=""
+        glassColor="#c0efff"
+        color="#e15b64"
       />
     </div>
   );

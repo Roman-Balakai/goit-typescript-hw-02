@@ -1,41 +1,59 @@
-import ReactModal from "react-modal";
-import s from "./ImageModal.module.css";
-const ImageModal = ({ image, closeModal }) => {
+import { useEffect } from "react";
+import Modal from "react-modal";
+Modal.setAppElement("#root");
+import styles from "./ImageModal.module.css";
+
+interface ImageModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  imageUrl: string;
+  imageAlt: string;
+}
+
+const ImageModal: React.FC<ImageModalProps> = ({
+  isOpen,
+  onClose,
+  imageUrl,
+  imageAlt,
+}) => {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("no-scroll");
+    } else {
+      document.body.classList.remove("no-scroll");
+    }
+
+    return () => {
+      document.body.classList.remove("no-scroll");
+    };
+  }, [isOpen]);
+
   return (
-    <ReactModal
-      isOpen={!!image}
-      onRequestClose={closeModal}
-      style={{
-        overlay: {
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: "999999",
-          backgroundColor: "rgba(45, 45, 45, 0.8)",
-          backdropFilter: "blur(5px)",
-        },
-        content: {
-          display: "flex",
-          position: "relative",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: "0",
-          padding: 0,
-          width: "800px",
-          height: "fit-content",
-          opacity: 1,
-          backgroundColor: "black",
-          color: "white",
-          inset: 0,
-        },
-      }}
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      shouldCloseOnOverlayClick={true}
+      className={styles.modal}
+      overlayClassName={styles.overlay}
     >
-      <img
-        className={s.modalImage}
-        src={image.urls.regular}
-        alt={image.alt_description}
-      />
-    </ReactModal>
+      <div className={styles.modalContent}>
+        <img src={imageUrl} alt={imageAlt} />
+      </div>
+    </Modal>
   );
 };
 

@@ -1,12 +1,18 @@
-import s from "./LoadMoreBtn.module.css";
+import React from "react";
+import styles from "./LoadMoreBtn.module.css";
 
-const LoadMoreBtn = ({ changePage }) => {
+interface LoadMoreBtnProps {
+  onClick: () => void;
+  isVisible: boolean;
+}
+
+const LoadMoreBtn: React.FC<LoadMoreBtnProps> = ({ onClick, isVisible }) => {
+  if (!isVisible) return null;
+
   return (
-    <div className={s.btnContainer}>
-      <button onClick={changePage} className={s.loadMoreBtn}>
-        Load more
-      </button>
-    </div>
+    <button className={styles.loadMoreBtn} onClick={onClick}>
+      Load More
+    </button>
   );
 };
 

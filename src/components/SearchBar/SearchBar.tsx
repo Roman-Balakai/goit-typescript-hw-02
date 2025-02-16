@@ -1,27 +1,53 @@
-import { useState } from "react";
-import s from "./SearchBar.module.css";
-import { CiSearch } from "react-icons/ci";
-const SearchBar = ({ onSearchChange }) => {
-  const [value, setValue] = useState("");
-  const handeleSubmit = (e) => {
-    e.preventDefault();
-    onSearchChange(value);
+import { useState, ChangeEvent, FormEvent } from "react";
+import toast from "react-hot-toast";
+import { HiOutlineSearch } from "react-icons/hi";
+import styles from "./SearchBar.module.css";
+
+interface SearchBarProps {
+  onSubmit: (query: string) => void;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
+  const [query, setQuery] = useState<string>("");
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
   };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (query.trim() === "") {
+      toast.error("Please enter a search term.");
+      return;
+    }
+    onSubmit(query.trim());
+    setQuery("");
+  };
+
+  const handleSearchClick = () => {
+    handleSubmit({ preventDefault: () => {} } as FormEvent<HTMLFormElement>);
+  };
+
   return (
-    <header className={s.header}>
-      <form onSubmit={handeleSubmit} className={s.form}>
-        <button type="submit" className={s.searchBtn}>
-          <CiSearch />
-        </button>
-        <input
-          className={s.searchBar}
-          onChange={(e) => setValue(e.target.value)}
-          value={value}
-          type="text"
-          autoComplete="off"
-          autoFocus
-          placeholder="Search images and photos"
-        />
+    <header className={styles.header}>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.inputWrapper}>
+          <HiOutlineSearch
+            className={styles.icon}
+            onClick={handleSearchClick}
+          />
+          <input
+            type="text"
+            id="search-input"
+            name="search"
+            className={styles.input}
+            value={query}
+            onChange={handleInputChange}
+            autoComplete="off"
+            autoFocus
+            placeholder="Search images and photos"
+          />
+        </div>
       </form>
     </header>
   );
