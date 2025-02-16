@@ -1,0 +1,17 @@
+.loadMoreBtn {
+  border: none;
+  border-radius: 0;
+  width: 200px;
+  height: 40px;
+  background-color: blue;
+  color: white;
+}
+.loadMoreBtn:hover {
+  background-color: rgb(65, 118, 241);
+}
+
+.btnContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
